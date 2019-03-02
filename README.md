@@ -1,26 +1,71 @@
 # RestfulDSL
+
 Kotlin DSL for APIs with Retrofit, applying Coroutines.
+
+ 
 
 Usage:
 
+ 
+
 ```java
-  interface RestService {
-        @GET("/items")
-        fun fetchItems(@Header(ACCESS_TOKEN) accessToken: String): Deferred<Response<Item>>
-  }
-  
+
+interface DemoService {
+
+    companion object {
+
+        private const val DEMO_URL = "/{appId}/profile"
+
+    }
+
+ 
+
+    @POST(DEMO_URL)
+
+    fun fetchItemsAsync(
+
+        @Path("appId") appId: String = ""
+
+    ): Deferred<Response<List<DemoItem>>>
+
+}
+......
+
+object DemoApi : BaseApi<DemoService>(DemoService::class.java)
+
   ......
-  
-  restyCall<Item>(this) {
-            request = { fetchItems("myToken") }
-            onSuccess = {
-                data_view.text = it?.name
-            }
-            onError = {
-                error_view.text = it.message
-            }
-            onException = {
-                exception_view.text = it.message
-            }
+
+
+  suspend fun demoAction(): AsyncResult<List<DemoItem>> {
+
+    return callAsync { DemoApi.service.fetchItemsAsync() }
+
   }
+
+ 
+
+  ......
+
+ 
+
+  launch {
+
+            demoAction()
+
+                .onSuccess {
+
+                    Toast.makeText(this@MainActivity, "Successfully Fetched ${it?.size} Items", Toast.LENGTH_LONG)
+
+                        .show()
+
+                }
+
+                .onError {
+
+                    Toast.makeText(this@MainActivity, "Failed!! -- $it", Toast.LENGTH_LONG).show()
+
+                }
+
+        } 
+
   ```
