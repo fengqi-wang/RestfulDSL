@@ -1,12 +1,17 @@
 package com.ktfan.retrodsl
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.ktfan.retrodsl.net.Item
-import com.ktfan.retrodsl.net.restyCall
-import kotlinx.android.synthetic.main.activity_main.*
+import com.ktfan.retrodsl.domain.demoAction
+import com.ktfan.retrodsl.model.onError
+import com.ktfan.retrodsl.model.onSuccess
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,17 +21,23 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        restyCall<Item>(this) {
-            request = { fetchItems("myToken") }
-            onSuccess = {
-                data_view.text = it?.name
-            }
-            onError = {
-                error_view.text = it.message
-            }
-            onException = {
-                exception_view.text = it.message
-            }
+        launch {
+            demoAction()
+                .onSuccess {
+                    Toast.makeText(this@MainActivity, "Successfully Fetched ${it?.size} Items", Toast.LENGTH_LONG)
+                        .show()
+                }
+                .onError {
+                    Toast.makeText(this@MainActivity, "Failed!! -- $it", Toast.LENGTH_LONG).show()
+                }
         }
+    }
+
+    private val job = Job()
+    override val coroutineContext = Dispatchers.Main + job
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }
